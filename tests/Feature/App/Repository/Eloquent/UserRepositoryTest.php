@@ -8,6 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 use App\Interfaces\Eloquent\UserRepositoryInterface;
+use App\Repository\Exceptions\NotFoundException;
 use Exception;
 use Illuminate\Database\QueryException;
 
@@ -74,7 +75,7 @@ class UserRepositoryTest extends TestCase
     public function test_create_exception()
     {
         $this->expectException(QueryException::class);
-        
+
         $data = [
             'name' => 'Hugo Ferreira Chiesse',
             'password' => bcrypt('Vasco@5247')
@@ -111,14 +112,31 @@ class UserRepositoryTest extends TestCase
 
     public function test_delete_not_found()
     {
-        try {
-            $deleted = $this->repository->delete('fake_email');
+        $this->expectException(NotFoundException::class);
+        $this->repository->delete('fake_email');
 
-            $this->assertTrue(false);
-        } catch (\Throwable $th) {
-            $this->assertInstanceOf(\Exception::class, $th);
-        }
-        
-        
+        // try {
+        //     $deleted = $this->repository->delete('fake_email');
+
+        //     $this->assertTrue(false);
+        // } catch (\Throwable $th) {
+        //     $this->assertInstanceOf(NotFoundException::class, $th);
+        // }
+    }
+
+    public function test_find()
+    {
+        $user = User::factory()->create();
+
+        $response = $this->repository->find($user->email);
+
+        $this->assertIsObject($response);
+    }
+
+    public function test_find_not_found()
+    {
+        $response = $this->repository->find('fake_email');
+
+        $this->assertNull($response);
     }
 }
